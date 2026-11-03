@@ -6,3 +6,5 @@ Kosovo usa UNK, come nel catalogo mledoze, perché il GeoJSON lo contrassegna -9
 Il catalogo include anche territori dipendenti; i piccoli territori possono non avere un poligono nel dataset.
 Le copie locali sono la fonte primaria; GitHub raw è il fallback. Nessuna dipendenza da REST Countries.
 I record non validi vengono normalizzati all'avvio e all'importazione. Prima della modifica l'originale viene conservato in IndexedDB/data con chiave recovery-TIMESTAMP.
+
+Confini dei 50 Stati USA: https://github.com/PublicaMundi/MappingAPI/blob/master/data/geojson/us-states.json (dataset usato negli esempi cartografici Leaflet). District of Columbia e Porto Rico non sono inclusi nel conteggio dei 50 Stati. Codici ISO 3166-2 US-XX.

@@ -13,3 +13,6 @@ Test eseguiti sullo script reale della pagina in Node VM, con DOM, Leaflet, rete
 - errore totale dei confini non disabilita il catalogo;
 - copia dei dati originali prima della migrazione.
 Esito: tutti superati. Nessun test visuale in un browser reale eseguito in questa sessione.
+
+## Estensione Stati USA — 2026-11-03
+Superati test sullo script reale in Node VM: 50 codici unici; aggiunta California/Alaska/Hawaii; colore selettivo; nessun incremento del numero dei Paesi; conteggio continenti; filtro Europa; vista USA; duplicati; normalizzazione backup con e senza usStates; ripristino dopo errore di salvataggio.
