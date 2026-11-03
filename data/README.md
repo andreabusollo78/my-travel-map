@@ -8,3 +8,5 @@ Le copie locali sono la fonte primaria; GitHub raw è il fallback. Nessuna dipen
 I record non validi vengono normalizzati all'avvio e all'importazione. Prima della modifica l'originale viene conservato in IndexedDB/data con chiave recovery-TIMESTAMP.
 
 Confini dei 50 Stati USA: https://github.com/PublicaMundi/MappingAPI/blob/master/data/geojson/us-states.json (dataset usato negli esempi cartografici Leaflet). District of Columbia e Porto Rico non sono inclusi nel conteggio dei 50 Stati. Codici ISO 3166-2 US-XX.
+
+Ricerca città e quartieri: Photon, https://photon.komoot.io/ (dati OpenStreetMap, ODbL). API: https://github.com/komoot/photon/blob/master/docs/api-v1.md . Query filtrate per countrycode ISO alpha-2 e layer city/district/locality, nomi del luogo conservati. Debounce 700 ms, cache in memoria di 80 query, richieste superate annullate. Il servizio pubblico non garantisce disponibilità. Non viene più usato Nominatim per autocomplete.

@@ -16,3 +16,8 @@ Esito: tutti superati. Nessun test visuale in un browser reale eseguito in quest
 
 ## Estensione Stati USA — 2026-11-03
 Superati test sullo script reale in Node VM: 50 codici unici; aggiunta California/Alaska/Hawaii; colore selettivo; nessun incremento del numero dei Paesi; conteggio continenti; filtro Europa; vista USA; duplicati; normalizzazione backup con e senza usStates; ripristino dopo errore di salvataggio.
+
+## Ricerca città e quartieri — 2026-11-03
+Comando riproducibile: node tests/search.test.mjs
+Test superati con fixture delle risposte reali Photon: New York City restituisce New York; Manhattan conserva il proprio nome e il contesto New York; località omonime distinte per Stato; filtro Paese ISO; esclusione negozi e coordinate non valide; duplicati; cache; salvataggio città/quartieri; conteggio città nella vista USA; cancellazione richieste superate; errori HTTP e zero risultati.
+Verifiche aggiuntive su risposte reali: Phoenix e Phoenix Arizona restituiscono Phoenix · Arizona come primo risultato.

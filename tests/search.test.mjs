@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import fs from 'node:fs/promises';
+const html=await fs.readFile(new URL('../index.html',import.meta.url),'utf8');
+const fixtures=JSON.parse(await fs.readFile(new URL('./fixtures/search.json',import.meta.url),'utf8'));
+const rows=JSON.parse(await fs.readFile(new URL('../data/countries.json',import.meta.url),'utf8'));
+const elements=new Map();
+function node(){return {value:'',textContent:'',options:[],childNodes:[],style:{},classList:{toggle(){},add(){},remove(){}},addEventListener(){},replaceChildren(...a){this.options=a;this.childNodes=a;this.textContent=''},add(x){this.options.push(x)},append(...a){this.childNodes.push(...a)},click(){return this.onclick?.()}}}
+function el(id){if(!elements.has(id))elements.set(id,node());return elements.get(id)}
+const map={setView(){return this},getZoom(){return 2},fitBounds(){},invalidateSize(){}};
+const layer=()=>({addTo(){return this},clearLayers(){},remove(){},getBounds(){return {isValid:()=>false}},bindPopup(){}});
+const ctx=vm.createContext({URL,AbortController,setTimeout,clearTimeout,console,rows,fixtures,Option:function(text,value){this.text=text;this.value=value},document:{getElementById:el,createElement:node,createTextNode:x=>x},L:{map:()=>map,layerGroup:layer,tileLayer:layer,geoJSON:layer,marker:layer},window:{addEventListener(){},scrollTo(){}},location:{hash:'',pathname:'/',search:''},history:{pushState(){}},navigator:{},confirm:()=>true});
+vm.runInContext(html.split('<script>')[1].split('</script>')[0].replace("init().catch(e=>say('Avvio non riuscito: '+e.message));",''),ctx);
+vm.runInContext("catalog=rows.map(x=>({code:x.cca3,name:x.name,continent:x.continent}));alpha2=new Map(rows.map(x=>[x.cca2,{code:x.cca3,name:x.name,continent:x.continent}]));save=async()=>{};",ctx);
+el('country').value='USA';
+const evalJS=s=>vm.runInContext(s,ctx);
+const asJSON=s=>JSON.parse(evalJS('JSON.stringify('+s+')'));
+assert.equal(new URL(evalJS("searchURL('New York City','US')")).searchParams.get('countrycode'),'US');
+assert.equal(new URL(evalJS("searchURL('New York City','US')")).searchParams.getAll('layer').join(','),'city,district,locality');
+const ny=asJSON("placeResults(fixtures.nyc,'US')");
+for(const key of ['phoenix','phoenixArizona']){const places=asJSON("placeResults(fixtures."+key+",'US')");assert.equal(places[0].name,'Phoenix');assert.match(places[0].label,/Arizona/);}
+const man=asJSON("placeResults(fixtures.manhattan,'US')");
+assert.equal(ny[0].name,'New York');
+assert.equal(man[0].name,'Manhattan');assert.match(man[0].label,/New York/);
+assert.match(man.find(x=>x.label.includes('Kansas')).label,/Kansas/);
+assert.equal(asJSON("placeResults(fixtures.nyc,'IT')").length,0);
+ctx.bad={features:[...fixtures.nyc.features,fixtures.nyc.features[0],{geometry:{type:'Point',coordinates:[0,91]},properties:{name:'invalid',type:'city',countrycode:'US'}},{geometry:{type:'Point',coordinates:[0,0]},properties:{name:'shop',type:'house',countrycode:'US'}}]};
+assert.equal(asJSON("placeResults(bad,'US')").length,ny.length);
+let urls=[];ctx.fetch=async url=>{urls.push(url);return {ok:true,json:async()=>fixtures.nyc}};
+await evalJS("search('New York City')");
+assert.equal(el('suggest').childNodes[0].textContent,ny[0].label);
+await evalJS("search('New York City')");assert.equal(urls.length,1);
+el('suggest').childNodes[0].onclick();await Promise.resolve();await Promise.resolve();
+assert.equal(asJSON('records.cities')[0].name,'New York');assert.equal(asJSON('records.cities')[0].country,'USA');
+evalJS("navigate('USA')");assert.equal(el('nt').textContent,1);
+ctx.fetch=async()=>({ok:true,json:async()=>fixtures.manhattan});await evalJS("search('Manhattan')");el('suggest').childNodes[0].onclick();await Promise.resolve();await Promise.resolve();
+assert.equal(asJSON('records.cities')[1].name,'Manhattan');assert.equal(el('nt').textContent,2);
+let finish;ctx.fetch=()=>new Promise(resolve=>{finish=resolve});
+const pending=evalJS("search('Old query')");evalJS('stopSearch()');el('suggest').textContent='new query';
+finish({ok:true,json:async()=>fixtures.nyc});await pending;assert.equal(el('suggest').textContent,'new query');
+ctx.fetch=async()=>({ok:false,status:503});await evalJS("search('network failure')");assert.match(el('suggest').textContent,/Ricerca non disponibile/);
+ctx.fetch=async()=>({ok:true,json:async()=>({features:[]})});await evalJS("search('no results')");assert.match(el('suggest').textContent,/Nessuna località/);
+console.log('PASS: real NYC/Manhattan results, ISO country filter, place types, labels, duplicates, coordinates, cache, city saves, USA statistics, stale requests, HTTP errors, empty results');
