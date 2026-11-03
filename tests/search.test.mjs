@@ -50,7 +50,7 @@ assert.equal(asJSON('records.cities')[0].name,'New York');assert.equal(asJSON('r
 evalJS("navigate('USA')");assert.equal(el('nt').textContent,1);
 ctx.fetch=async()=>({ok:true,json:async()=>fixtures.phoenix});await evalJS("search('Phoenix')");el('suggest').childNodes[0].onclick();await Promise.resolve();await Promise.resolve();
 assert.equal(asJSON('records.cities')[1].name,'Phoenix');assert.equal(el('nt').textContent,2);
-assert(markerOptions.length>0);assert.match(markerOptions.at(-1).icon.html,/#c218b8/);assert.equal(evalJS('Object.values(COLORS).includes(CITY_PIN_COLOR)'),false);assert.equal(markerOptions.at(-1).icon.iconAnchor.join(','),'17,45');
+assert(markerOptions.length>0);assert.match(markerOptions.at(-1).icon.html,/#c218b8/);assert.equal(evalJS('Object.values(COLORS).includes(CITY_PIN_COLOR)'),false);assert.equal(markerOptions.at(-1).icon.iconAnchor.join(','),'8.5,22.5');
 const addressOnly={features:[{type:'Feature',geometry:{type:'Point',coordinates:[-112.1,33.4]},properties:{type:'city',osm_key:'amenity',osm_value:'school',name:'Phoenix school',countrycode:'US'}},{type:'Feature',geometry:{type:'Point',coordinates:[-112.1,33.4]},properties:{type:'house',osm_key:'place',osm_value:'house',name:'Phoenix address',countrycode:'US'}}]};
 ctx.addressOnly=addressOnly;assert.equal(asJSON("placeResults(addressOnly,'US')").length,0);
 let finish;ctx.fetch=()=>new Promise(resolve=>{finish=resolve});
