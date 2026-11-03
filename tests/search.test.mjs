@@ -18,6 +18,14 @@ const evalJS=s=>vm.runInContext(s,ctx);
 const asJSON=s=>JSON.parse(evalJS('JSON.stringify('+s+')'));
 assert.equal(new URL(evalJS("searchURL('New York City','US')")).searchParams.get('countrycode'),'US');
 assert.equal(new URL(evalJS("searchURL('New York City','US')")).searchParams.getAll('layer').join(','),'city');
+assert.equal(evalJS("citySearchTerm('Londra','GB')"),'London');assert.equal(evalJS("citySearchTerm('Lond','GB')"),'London');
+assert.equal(evalJS("citySearchTerm('Monaco di Baviera','DE')"),'Munich');
+assert.equal(evalJS("citySearchTerm('Londra','IT')"),'Londra');
+assert.equal(evalJS("italianCity('Munich','DEU')[1]"),'Monaco di Baviera');
+assert.equal(evalJS("italianCity('Florence','ITA')[1]"),'Firenze');
+assert.equal(evalJS("normalize({countries:[],cities:[{name:'London',country:'GBR',lat:51.5,lon:-.1},{name:'Londra',country:'GBR',lat:51.5,lon:-.1}]}).cities.length"),1);
+assert.equal(evalJS("normalize({countries:[],cities:[{name:'London',country:'GBR',lat:51.5,lon:-.1}]}).cities[0].name"),'Londra');
+assert.equal(evalJS("italianCity('Naples','USA')"),undefined);
 const ny=asJSON("placeResults(fixtures.nyc,'US')");
 for(const key of ['phoenix','phoenixArizona']){const places=asJSON("placeResults(fixtures."+key+",'US')");assert.equal(places[0].name,'Phoenix');assert.match(places[0].label,/Arizona/);}
 const man=asJSON("placeResults(fixtures.manhattan,'US')");
