@@ -30,3 +30,6 @@ Test superati: Londra/Lond con Paese GB → London; Monaco di Baviera → Munich
 
 ## Günzburg e Senigallia — 2026-11-03
 Test su risposte reali superati per Günzburg DE e Senigallia IT. Accettati place city/town/village/hamlet/municipality anche nei layer district/locality, e boundary administrative solo se classificato city. Il punto del centro abitato ha precedenza sul poligono del comune; duplicati comune/centro eliminati. Restano esclusi quartieri, landuse, indirizzi, stazioni e attività.
+
+## Isole visitate — 2026-11-03
+Test riproducibili: node tests/search.test.mjs. Superati: risposte reali Meedhupparu (islet Adaaran Select), Fuerteventura e Lanzarote; esclusione reef, strade e hotel; filtro Paese dedicato e separazione cache città/isole; aggiunta e duplicati; conteggi indipendenti e continenti; spilli isole separati; migrazione archivio senza islands; export versione 3 e import; coordinate errate e annullamento di salvataggio fallito.

@@ -59,3 +59,31 @@ finish({ok:true,json:async()=>fixtures.nyc});await pending;assert.equal(el('sugg
 ctx.fetch=async()=>({ok:false,status:503});await evalJS("search('network failure')");assert.match(el('suggest').textContent,/Ricerca non disponibile/);
 ctx.fetch=async()=>({ok:true,json:async()=>({features:[]})});await evalJS("search('no results')");assert.match(el('suggest').textContent,/Nessuna città/);
 console.log('PASS: city centers only, no addresses or boroughs, distinct city pins, real NYC/Phoenix results, ISO country filter, place types, labels, duplicates, coordinates, cache, city saves, USA statistics, stale requests, HTTP errors, empty results');
+
+
+evalJS("navigate(null)");
+assert.equal(asJSON("normalize({countries:[],cities:[]}).islands").length,0);
+const islandURL=new URL(evalJS("searchURL('Meedhupparu','MV','island')"));assert.equal(islandURL.searchParams.get('countrycode'),'MV');assert.equal(islandURL.searchParams.has('layer'),false);assert.equal(islandURL.searchParams.getAll('osm_tag').join(','),'place:island,place:islet');
+assert.equal(asJSON("placeResults(fixtures.islands.meedhupparu,'MV','island')").length,1);
+assert.equal(asJSON("placeResults(fixtures.islands.fuerteventura,'ES','island')")[0].name,'Fuerteventura');
+assert.equal(asJSON("placeResults(fixtures.islands.lanzarote,'ES','island')")[0].name,'Lanzarote');
+assert.equal(asJSON("placeResults(fixtures.islands.meedhupparu,'ES','island')").length,0);
+assert.equal(asJSON("placeResults(fixtures.islands.meedhupparu,'MV','city')").length,0);
+evalJS("navigate(null)");el('island-country').value='MDV';
+ctx.fetch=async()=>({ok:true,json:async()=>fixtures.islands.meedhupparu});
+await evalJS("search('Meedhupparu','island')");assert.match(el('island-suggest').childNodes[0].textContent,/Meedhupparu/);
+el('island-suggest').childNodes[0].onclick();for(let i=0;i<8;i++)await Promise.resolve();
+assert.equal(asJSON('records.islands').length,1);assert.equal(asJSON('records.cities').length,2);assert.equal(el('ni').textContent,1);assert.equal(el('nt').textContent,2);
+assert.match(markerOptions.at(-1).icon.html,/#6b3f16/);
+await evalJS("addCity(placeResults(fixtures.islands.meedhupparu,'MV','island')[0],placeResults(fixtures.islands.meedhupparu,'MV','island')[0].name,'island')");
+assert.equal(asJSON('records.islands').length,1);
+evalJS("navigate('Europe')");assert.equal(el('ni').textContent,0);evalJS("navigate('Asia')");assert.equal(el('ni').textContent,1);
+ctx.Blob=class {constructor(parts){ctx.exported=JSON.parse(parts[0])}};ctx.URL=class extends URL {static createObjectURL(){return 'blob:test'}static revokeObjectURL(){}};
+el('export').onclick();assert.equal(ctx.exported.version,3);assert.equal(ctx.exported.islands.length,1);
+ctx.backup=ctx.exported;ctx.backups=0;evalJS("preserveOriginal=async()=>{backups++}");
+const event={target:{files:[{text:async()=>JSON.stringify(ctx.backup)}],value:'backup.json'}};
+await el('file').onchange(event);assert.equal(asJSON('records.islands').length,1);assert.equal(ctx.backups,1);
+ctx.badIsland={countries:[],cities:[],islands:[...ctx.exported.islands,...ctx.exported.islands,{name:'bad',lat:100,lon:1,country:'MDV'}]};assert.equal(asJSON('normalize(badIsland).islands').length,1);
+evalJS("navigate(null);records.islands=[];save=async()=>{throw Error('quota')}");
+await assert.rejects(evalJS("addCity(placeResults(fixtures.islands.meedhupparu,'MV','island')[0],'Meedhupparu','island')"),/quota/);assert.equal(asJSON('records.islands').length,0);
+console.log('PASS: island/islet searches, Meedhupparu/Fuerteventura/Lanzarote, no reefs or city leakage, separate counts/pins, duplicates, continent views, v1-v3 migration, export/import, invalid coordinates, save rollback');
