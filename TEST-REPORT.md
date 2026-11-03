@@ -27,3 +27,6 @@ Test aggiornati e superati: layer city e tag place, rifiuto di indirizzi/POI e d
 
 ## Nomi italiani — 2026-11-03
 Test superati: Londra/Lond con Paese GB → London; Monaco di Baviera → Munich; Firenze/Florence; nomi italiani dei record preesistenti; deduplica London/Londra alle stesse coordinate; nessuna traduzione di Naples USA in Napoli. Filtri per centri abitati e spilli invariati.
+
+## Günzburg e Senigallia — 2026-11-03
+Test su risposte reali superati per Günzburg DE e Senigallia IT. Accettati place city/town/village/hamlet/municipality anche nei layer district/locality, e boundary administrative solo se classificato city. Il punto del centro abitato ha precedenza sul poligono del comune; duplicati comune/centro eliminati. Restano esclusi quartieri, landuse, indirizzi, stazioni e attività.

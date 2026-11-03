@@ -50,19 +50,20 @@ function citySearchTerm(q,country){
 }
 function cityTitle(city){return city.name+(city.internationalName&&cityKey(city.internationalName)!==cityKey(city.name)?' ('+city.internationalName+')':'')}
 
-function searchURL(q,country){const url=new URL('https://photon.komoot.io/api/');url.searchParams.set('q',citySearchTerm(q,country));url.searchParams.set('limit','12');url.searchParams.set('lang','en');url.searchParams.set('layer','city');url.searchParams.set('osm_tag','place');if(country)url.searchParams.set('countrycode',country);return url.href}
+function searchURL(q,country){const url=new URL('https://photon.komoot.io/api/');url.searchParams.set('q',citySearchTerm(q,country));url.searchParams.set('limit','12');url.searchParams.set('lang','en');for(const layer of ['city','district','locality'])url.searchParams.append('layer',layer);if(country)url.searchParams.set('countrycode',country);return url.href}
+function isSettlement(p){return ['city','district','locality'].includes(p.type)&&((p.osm_key==='place'&&['city','town','village','hamlet','municipality'].includes(p.osm_value))||(p.type==='city'&&p.osm_key==='boundary'&&p.osm_value==='administrative'))}
 function placeResults(data,country){
  if(!Array.isArray(data?.features))throw Error('Risposta della ricerca non valida');
  const seen=new Set(),results=[];
- for(const f of data.features){
+ for(const f of [...data.features].sort((a,b)=>(a.properties?.osm_key==='boundary')-(b.properties?.osm_key==='boundary'))){
   const p=f.properties||{},coords=f.geometry?.coordinates;
-  if(p.type!=='city'||p.osm_key!=='place'||!['city','town','village','hamlet','municipality'].includes(p.osm_value)||typeof p.name!=='string'||!p.name.trim()||f.geometry?.type!=='Point'||!Array.isArray(coords))continue;
+  if(!isSettlement(p)||typeof p.name!=='string'||!p.name.trim()||f.geometry?.type!=='Point'||!Array.isArray(coords))continue;
   const [lon,lat]=coords;
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)continue;
   const cc=String(p.countrycode||'').toUpperCase(),m=alpha2.get(cc);
   if(!m||(country&&cc!==country)||(view&&(view==='USA'?m.code!=='USA':m.continent!==view)))continue;
   const translated=italianCity(p.name.trim(),m.code),n=translated?.[1]||p.name.trim(),internationalName=translated&&cityKey(p.name)!==cityKey(n)?p.name.trim():'',id=m.code+':'+n.toLowerCase()+':'+lat.toFixed(3)+':'+lon.toFixed(3);
-  if(seen.has(id))continue;seen.add(id);
+  const settlementKey=JSON.stringify([m.code,cityKey(n),p.state||'',p.county||'']);if(seen.has(settlementKey))continue;seen.add(settlementKey);
   const context=[...new Set([p.city,p.state,m.name].filter(x=>typeof x==='string'&&x.trim()&&x!==n))];
   results.push({name:n,internationalName,label:[cityTitle({name:n,internationalName}),...context].join(' · '),lat,lon,address:{country_code:cc.toLowerCase(),country:m.name}});
  }
