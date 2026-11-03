@@ -21,3 +21,6 @@ Superati test sullo script reale in Node VM: 50 codici unici; aggiunta Californi
 Comando riproducibile: node tests/search.test.mjs
 Test superati con fixture delle risposte reali Photon: New York City restituisce New York; Manhattan conserva il proprio nome e il contesto New York; località omonime distinte per Stato; filtro Paese ISO; esclusione negozi e coordinate non valide; duplicati; cache; salvataggio città/quartieri; conteggio città nella vista USA; cancellazione richieste superate; errori HTTP e zero risultati.
 Verifiche aggiuntive su risposte reali: Phoenix e Phoenix Arizona restituiscono Phoenix · Arizona come primo risultato.
+
+## Centri abitati e spilli — 2026-11-03
+Test aggiornati e superati: layer city e tag place, rifiuto di indirizzi/POI e distretti, New York/Phoenix ancora reperibili, Manhattan NY esclusa come distretto; spilli SVG con capocchia #c218b8 diversa dalla palette Paesi, punta ancorata alle coordinate; città preesistenti disegnate con lo stesso indicatore.
