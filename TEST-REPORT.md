@@ -33,3 +33,6 @@ Test su risposte reali superati per Günzburg DE e Senigallia IT. Accettati plac
 
 ## Isole visitate — 2026-11-03
 Test riproducibili: node tests/search.test.mjs. Superati: risposte reali Meedhupparu (islet Adaaran Select), Fuerteventura e Lanzarote; esclusione reef, strade e hotel; filtro Paese dedicato e separazione cache città/isole; aggiunta e duplicati; conteggi indipendenti e continenti; spilli isole separati; migrazione archivio senza islands; export versione 3 e import; coordinate errate e annullamento di salvataggio fallito.
+
+## Backup con orario ed Excel — 2026-11-03
+Test: node tests/search.test.mjs. Esportazione JSON confermata solo dopo chiusura del file tramite selettore di salvataggio; alternativa download indicata esplicitamente. Orari Europe/Rome e cronologia locale, annullamento, errori scrittura, successo import e rollback su errore. Excel XLSX: riepilogo, sei continenti, eventuale Da verificare, tutte le categorie e tutte le viste; controllo ZIP/CRC e validità XML con .NET. Stringhe trattate come testo per impedire formule da nomi esterni. File di prova: tests/output/continenti-test.xlsx (non pubblicato).

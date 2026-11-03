@@ -79,7 +79,7 @@ await evalJS("addCity(placeResults(fixtures.islands.meedhupparu,'MV','island')[0
 assert.equal(asJSON('records.islands').length,1);
 evalJS("navigate('Europe')");assert.equal(el('ni').textContent,0);evalJS("navigate('Asia')");assert.equal(el('ni').textContent,1);
 ctx.Blob=class {constructor(parts){ctx.exported=JSON.parse(parts[0])}};ctx.URL=class extends URL {static createObjectURL(){return 'blob:test'}static revokeObjectURL(){}};
-el('export').onclick();assert.equal(ctx.exported.version,3);assert.equal(ctx.exported.islands.length,1);
+evalJS('ready=true');await el('export').onclick();assert.equal(ctx.exported.version,3);assert.equal(ctx.exported.islands.length,1);
 ctx.backup=ctx.exported;ctx.backups=0;evalJS("preserveOriginal=async()=>{backups++}");
 const event={target:{files:[{text:async()=>JSON.stringify(ctx.backup)}],value:'backup.json'}};
 await el('file').onchange(event);assert.equal(asJSON('records.islands').length,1);assert.equal(ctx.backups,1);
@@ -87,3 +87,29 @@ ctx.badIsland={countries:[],cities:[],islands:[...ctx.exported.islands,...ctx.ex
 evalJS("navigate(null);records.islands=[];save=async()=>{throw Error('quota')}");
 await assert.rejects(evalJS("addCity(placeResults(fixtures.islands.meedhupparu,'MV','island')[0],'Meedhupparu','island')"),/quota/);assert.equal(asJSON('records.islands').length,0);
 console.log('PASS: island/islet searches, Meedhupparu/Fuerteventura/Lanzarote, no reefs or city leakage, separate counts/pins, duplicates, continent views, v1-v3 migration, export/import, invalid coordinates, save rollback');
+
+
+const memory=new Map();ctx.localStorage={setItem:(k,v)=>memory.set(k,v),getItem:k=>memory.get(k)};
+evalJS('ready=true;save=async()=>{};view=null');
+let closed=false;ctx.window.showSaveFilePicker=async()=>({name:'backup-prova.json',createWritable:async()=>({write:async()=>{},close:async()=>{closed=true},abort:async()=>{}})});
+await el('export').onclick();assert(closed);assert.match(el('json-export-status').textContent,/salvato correttamente il/);assert.match(el('json-export-status').textContent,/backup-prova.json/);assert.match(el('json-export-status').textContent,/\d{2}:\d{2}:\d{2}/);
+const savedMessage=el('json-export-status').textContent;el('json-export-status').textContent='';evalJS('restoreBackupActivity()');assert.equal(el('json-export-status').textContent,savedMessage);
+ctx.window.showSaveFilePicker=async()=>{const e=new Error('cancel');e.name='AbortError';throw e};await el('export').onclick();assert.match(el('json-export-status').textContent,/annullato/);assert.equal(JSON.parse([...memory.values()][0])['json-export'],savedMessage);
+ctx.window.showSaveFilePicker=async()=>({createWritable:async()=>({write:async()=>{throw Error('quota')},abort:async()=>{},close:async()=>{}})});await el('export').onclick();assert.match(el('json-export-status').textContent,/non riuscito/);
+delete ctx.window.showSaveFilePicker;await el('export').onclick();assert.match(el('json-export-status').textContent,/Download avviato/);
+const before=JSON.stringify(asJSON('records'));evalJS("save=async()=>{throw Error('storage failure')}");await el('file').onchange({target:{files:[{name:'backup.json',text:async()=>JSON.stringify(ctx.backup)}],value:'backup'}});assert.equal(JSON.stringify(asJSON('records')),before);assert.match(el('json-import-status').textContent,/non riuscita/);
+evalJS("save=async()=>{}");await el('file').onchange({target:{files:[{name:'backup-drive.json',text:async()=>JSON.stringify(ctx.backup)}],value:'backup'}});assert.match(el('json-import-status').textContent,/Importazione avvenuta correttamente il/);assert.match(el('json-import-status').textContent,/backup-drive.json/);
+ctx.demo={countries:['ITA','USA','JPN'],usStates:['US-AZ'],cities:[{id:'rome',name:'Roma',country:'ITA',lat:41.9,lon:12.5},{id:'phoenix',name:'Phoenix',country:'USA',lat:33.45,lon:-112.07},{id:'unknown',name:'=HYPERLINK("<x>&")',country:'',lat:0,lon:0}],islands:[{name:'Meedhupparu',country:'MDV',lat:5.456,lon:72.98}]};
+evalJS("records=normalize(demo);view='Europe'");const sheets=asJSON("travelSheets(new Date('2026-11-03T12:00:00Z'))");
+assert.equal(sheets.length,8);assert.equal(sheets[0].name,'Riepilogo');assert(sheets.find(s=>s.name==='America del Nord').rows.some(r=>r[1]==='Phoenix'));assert(sheets.find(s=>s.name==='Da verificare').rows.some(r=>r[1].startsWith('=HYPERLINK')));
+assert.equal(sheets[0].rows.at(-1).slice(1).join(','),'3,3,1,1');
+ctx.TextEncoder=TextEncoder;vm.runInContext(await fs.readFile(new URL('../xlsx-export.js',import.meta.url),'utf8'),ctx);
+const workbook=Buffer.from(evalJS("TravelXLSX.create(travelSheets(new Date('2026-11-03T12:00:00Z')))"));
+const entries=new Map();let offset=0;
+while(workbook.readUInt32LE(offset)===0x04034b50){const size=workbook.readUInt32LE(offset+18),len=workbook.readUInt16LE(offset+26),extra=workbook.readUInt16LE(offset+28),name=workbook.subarray(offset+30,offset+30+len).toString('utf8'),start=offset+30+len+extra,bytes=workbook.subarray(start,start+size);let crc=0xffffffff;for(const b of bytes){crc^=b;for(let k=0;k<8;k++)crc=crc&1?0xedb88320^(crc>>>1):crc>>>1}assert.equal((crc^0xffffffff)>>>0,workbook.readUInt32LE(offset+14));entries.set(name,bytes.toString('utf8'));offset=start+size}
+assert.equal(entries.size,13);assert.equal(workbook.readUInt32LE(offset),0x02014b50);assert.equal(workbook.readUInt32LE(workbook.length-22),0x06054b50);assert.equal(workbook.readUInt16LE(workbook.length-12),13);
+assert.match(entries.get('xl/workbook.xml'),/Da verificare/);assert.match(entries.get('xl/worksheets/sheet2.xml'),/Roma/);
+assert.match(entries.get('xl/worksheets/sheet8.xml'),/&lt;x&gt;&amp;/);assert(![...entries.values()].some(xml=>xml.includes('<f>')));
+await fs.mkdir(new URL('./output/',import.meta.url),{recursive:true});await fs.writeFile(new URL('./output/continenti-test.xlsx',import.meta.url),workbook);
+ctx.Blob=class {constructor(parts){ctx.excelBytes=parts[0]}};await el('export-excel').onclick();assert.match(el('excel-export-status').textContent,/File Excel esportato il/);assert(ctx.excelBytes.length>1000);
+console.log('PASS: confirmed file writes, download fallback, timestamps, persisted activity, cancellation/errors, import success/rollback, every continent/category including unknown data, XLSX ZIP/CRC/relationships/text/numbers and formula-safe strings');
